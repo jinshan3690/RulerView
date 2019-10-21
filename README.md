@@ -14,7 +14,7 @@ Android RulerView
 
 ##基本使用
 ```xml
-   <com.lw.widget.RulerView
+   <com.js.rulerview.RulerView
         android:id="@+id/ruler_view"
         android:layout_width="match_parent"
         android:layout_height="50dp"

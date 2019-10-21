@@ -1,4 +1,4 @@
-package com.lw.widget;
+package com.js.rulerview;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -9,7 +9,6 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.support.annotation.IntegerRes;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
@@ -17,7 +16,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.OverScroller;
 
-import com.lw.R;
+import java.math.BigDecimal;
 
 
 /**
@@ -27,9 +26,17 @@ public class RulerView extends View {
 
     final String TAG = RulerView.class.getSimpleName();
 
+    private int mSelectedPosition;
+
     private int mBeginRange;
+    private int[] mBeginRanges;
 
     private int mEndRange;
+    private int[] mEndRanges;
+
+    private int[] mRangeColors;
+
+    private float mPrecision;
 
     private int mInnerWidth;
 
@@ -57,12 +64,13 @@ public class RulerView extends View {
     private float mTextSize;
 
     private int mIndicateColor;
+    private int mSelectedColor;
 
     private OnScaleListener mListener;
 
-    private int     mGravity ;
+    private int mGravity;
 
-    private Rect    mIndicateLoc;
+    private Rect mIndicateLoc;
 
 
     //滚动相关参数
@@ -87,10 +95,16 @@ public class RulerView extends View {
 
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.RulerView);
         mIndicateColor = ta.getColor(R.styleable.RulerView_indicateColor, Color.BLACK);
+        mSelectedColor = ta.getColor(R.styleable.RulerView_selectedColor, Color.RED);
         mTextColor = ta.getColor(R.styleable.RulerView_textColor, Color.GRAY);
         mTextSize = ta.getDimension(R.styleable.RulerView_textSize, 18);
+        mSelectedPosition = ta.getInt(R.styleable.RulerView_selectedPosition, 0);
         mBeginRange = ta.getInt(R.styleable.RulerView_begin, 0);
         mEndRange = ta.getInt(R.styleable.RulerView_end, 100);
+        mPrecision = ta.getFloat(R.styleable.RulerView_precision, 1);
+        mBeginRanges = convertToInt(ta.getString(R.styleable.RulerView_beginRanges));
+        mEndRanges = convertToInt(ta.getString(R.styleable.RulerView_endRanges));
+        mRangeColors = convertToColor(ta.getString(R.styleable.RulerView_rangeColors));
         mIndicateWidth = (int) ta.getDimension(R.styleable.RulerView_indicateWidth, 5);
         mIndicatePadding = (int) ta.getDimension(R.styleable.RulerView_indicatePadding, 15);
         ta.recycle();
@@ -103,6 +117,36 @@ public class RulerView extends View {
         mIndicateScale = 0.7f;
 
         initValue();
+        post(new Runnable() {
+            @Override
+            public void run() {
+                smoothScrollTo(mSelectedPosition);
+            }
+        });
+    }
+
+    private int[] convertToInt(String string) {
+        int[] val = null;
+        if (string != null && string.trim().length() != 0){
+            String[] strs = string.split(",");
+            val = new int[strs.length];
+            for (int i = 0; i < strs.length; i++) {
+                val[i] = Integer.valueOf(strs[i]);
+            }
+        }
+        return val;
+    }
+
+    private int[] convertToColor(String string) {
+        int[] val = null;
+        if (string != null && string.trim().length() != 0){
+            String[] strs = string.split(",");
+            val = new int[strs.length];
+            for (int i = 0; i < strs.length; i++) {
+                val[i] = Color.parseColor(strs[i]);
+            }
+        }
+        return val;
     }
 
     private void initValue() {
@@ -120,62 +164,77 @@ public class RulerView extends View {
         mIndicatePaint.setStyle(Paint.Style.FILL);
 
         mTextPaint = new Paint();
+        mTextPaint.setAntiAlias(true);
         mTextPaint.setStyle(Paint.Style.FILL);
         mTextPaint.setColor(mTextColor);
         mTextPaint.setTextAlign(Paint.Align.CENTER);
         mTextPaint.setTextSize(mTextSize);
         mInnerWidth = (mEndRange - mBeginRange) * getIndicateWidth();
 
-        mIndicateLoc  = new Rect();
+        mIndicateLoc = new Rect();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
 
         int count = canvas.save();
-        for(int value = mBeginRange,position = 0 ; value <= mEndRange ; value++,position++){
-            drawIndicate(canvas, position);
-            if(mIsWithText)
-                drawText(canvas, position,   String.valueOf(value));
+        for (int value = mBeginRange, position = 0; value <= mEndRange; value++, position++) {
+            drawIndicate(canvas, position, value);
+            if (mIsWithText)
+                drawText(canvas, position, String.valueOf(new BigDecimal(value).multiply(new BigDecimal(Float.toString(mPrecision))).floatValue()));
         }
         canvas.restoreToCount(count);
     }
 
-    private void drawIndicate(Canvas canvas, int position){
+    private void drawIndicate(Canvas canvas, int position, int value) {
         computeIndicateLoc(mIndicateLoc, position);
         int left = mIndicateLoc.left + mIndicatePadding;
         int right = mIndicateLoc.right - mIndicatePadding;
         int top = mIndicateLoc.top;
         int bottom = mIndicateLoc.bottom;
 
-        if(position % 5 != 0) {
+        if (position % 5 != 0) {
             int indicateHeight = bottom - top;
-            if(isAlignTop()){
+            if (isAlignTop()) {
                 bottom = (int) (top + indicateHeight * mIndicateScale);
-            }else{
+            } else {
                 top = (int) (bottom - indicateHeight * mIndicateScale);
             }
         }
 
-        mIndicatePaint.setColor(mIndicateColor);
+        if (position == mSelectedPosition)
+            mIndicatePaint.setColor(mSelectedColor);
+        else {
+            mIndicatePaint.setColor(mIndicateColor);
+            if(mBeginRanges.length == mEndRanges.length)
+                for (int i = 0; i < mBeginRanges.length; i++) {
+                    if (mBeginRanges[i] <= value && mEndRanges[i] >= value){
+                        mIndicatePaint.setColor(mRangeColors[i]);
+                        break;
+                    }
+                }
+        }
         canvas.drawRect(left, top, right, bottom, mIndicatePaint);
     }
 
-    private void drawText(Canvas canvas, int position,String text){
-        if(position % 5 != 0)
+    private void drawText(Canvas canvas, int position, String text) {
+        if (position % 5 != 0)
             return;
 
         computeIndicateLoc(mIndicateLoc, position);
-        int textHeight  = computeTextHeight();
+        float textHeight = computeTextHeight();
 
-        mTextPaint.setColor(mTextColor);
+        if (position == mSelectedPosition)
+            mTextPaint.setColor(mSelectedColor);
+        else
+            mTextPaint.setColor(mTextColor);
         mTextPaint.setTextSize(mTextSize);
         mTextPaint.setTextAlign(Paint.Align.CENTER);
 
-        int x = (mIndicateLoc.left +  mIndicateLoc.right) / 2;
-        int y = mIndicateLoc.bottom + textHeight;
+        int x = (mIndicateLoc.left + mIndicateLoc.right) / 2;
+        float y = mIndicateLoc.bottom + textHeight;
 
-        if (!isAlignTop()){
+        if (!isAlignTop()) {
             y = mIndicateLoc.top;
             mTextPaint.getTextBounds(text, 0, text.length(), mIndicateLoc);
             y += mIndicateLoc.top / 2;  //增加一些偏移
@@ -186,11 +245,12 @@ public class RulerView extends View {
 
     /**
      * 计算indicate的位置
+     *
      * @param outRect
      * @param position
      */
-    private void computeIndicateLoc(Rect outRect,int position){
-        if(outRect == null)
+    private void computeIndicateLoc(Rect outRect, int position) {
+        if (outRect == null)
             return;
 
         int height = getHeight();
@@ -201,33 +261,33 @@ public class RulerView extends View {
         int top = getPaddingTop();
         int bottom = height - getPaddingBottom();
 
-        if(mIsWithText){
-            int textHeight = computeTextHeight();
-            if(isAlignTop())
-                bottom  -= textHeight;
+        if (mIsWithText) {
+            float textHeight = computeTextHeight();
+            if (isAlignTop())
+                bottom -= textHeight;
             else
                 top += textHeight;
         }
 
         int offsets = getStartOffsets();
-        left += offsets ;
+        left += offsets;
         right += offsets;
         outRect.set(left, top, right, bottom);
     }
 
     /**
      * 开始偏移，如果要包含文字的话才需要偏移。
+     *
      * @return
      */
-    private int     getStartOffsets(){
-        if(mIsWithText){
+    private int getStartOffsets() {
+        if (mIsWithText) {
             String text = String.valueOf(mBeginRange);
             int textWidth = (int) mTextPaint.measureText(text, 0, text.length());
             return textWidth / 2;
         }
         return 0;
     }
-
 
 
     @Override
@@ -275,7 +335,6 @@ public class RulerView extends View {
                         deltaX *= 0.7;
 
 
-
                     if (overScrollBy(deltaX, 0, getScrollX(), getScrollY(), getMaximumScroll(), 0, getWidth(), 0, true)) {
                         mVelocityTracker.clear();
                     }
@@ -317,36 +376,38 @@ public class RulerView extends View {
     }
 
 
-    private void refreshValues(){
+    private void refreshValues() {
         mInnerWidth = (mEndRange - mBeginRange) * getIndicateWidth();
         invalidateView();
 
     }
 
-    private int getIndicateWidth(){
+    private int getIndicateWidth() {
         return mIndicateWidth + mIndicatePadding + mIndicatePadding;
     }
 
     /**
      * 获取最小滚动值。
+     *
      * @return
      */
-    private int getMinimumScroll(){
-        return  -(getWidth() - getIndicateWidth()) / 2 + getStartOffsets() ;
+    private int getMinimumScroll() {
+        return -(getWidth() - getIndicateWidth()) / 2 + getStartOffsets();
     }
 
     /**
      * 获取最大滚动值。
+     *
      * @return
      */
-    private int getMaximumScroll(){
+    private int getMaximumScroll() {
         return mInnerWidth + getMinimumScroll();
     }
 
     /**
      * 调整indicate，使其居中。
      */
-    private void adjustIndicate(){
+    private void adjustIndicate() {
         if (!mOverScroller.isFinished())
             mOverScroller.abortAnimation();
 
@@ -354,8 +415,8 @@ public class RulerView extends View {
         int scrollX = getScrollByPosition(position);
         scrollX -= getScrollX();
 
-        if(scrollX != 0){
-            mOverScroller.startScroll(getScrollX(), getScrollY(), scrollX,0);
+        if (scrollX != 0) {
+            mOverScroller.startScroll(getScrollX(), getScrollY(), scrollX, 0);
             invalidateView();
         }
     }
@@ -379,10 +440,11 @@ public class RulerView extends View {
 
     /**
      * 获取position的绝对滚动位置。
+     *
      * @param position
      * @return
      */
-    private int getScrollByPosition(int position){
+    private int getScrollByPosition(int position) {
         computeIndicateLoc(mIndicateLoc, position);
         int scrollX = mIndicateLoc.left - getStartOffsets() + getMinimumScroll();
         return scrollX;
@@ -390,38 +452,40 @@ public class RulerView extends View {
 
     /**
      * 计算当前已选择的位置
+     *
      * @return
      */
     public int computeSelectedPosition() {
         int centerX = getScrollX() - getMinimumScroll() + getIndicateWidth() / 2;
-        centerX = Math.max(0, Math.min(mInnerWidth , centerX));
+        centerX = Math.max(0, Math.min(mInnerWidth, centerX));
         int position = centerX / getIndicateWidth();
         return position;
     }
 
-    public void smoothScrollTo(int position){
-        if(position < 0 || mBeginRange + position > mEndRange)
+    public void smoothScrollTo(int position) {
+        if (position < 0 || mBeginRange + position > mEndRange)
             return;
 
-        if(!mOverScroller.isFinished())
+        if (!mOverScroller.isFinished())
             mOverScroller.abortAnimation();
 
         int scrollX = getScrollByPosition(position);
-        mOverScroller.startScroll(getScrollX(), getScrollY(), scrollX - getScrollX() , 0);
+        mOverScroller.startScroll(getScrollX(), getScrollY(), scrollX - getScrollX(), 0);
         invalidateView();
     }
 
-    public void smoothScrollToValue(int value){
-        int position = value - mBeginRange;
+    public void smoothScrollToValue(float value) {
+        int position = (int) (new BigDecimal(value).divide(new BigDecimal(mPrecision)).floatValue() - mBeginRange);
         smoothScrollTo(position);
     }
 
 
     private void onScaleChanged(int scale) {
-        if (mListener != null)
-            mListener.onScaleChanged(scale);
+        if (mListener != null && mSelectedPosition != scale) {
+            mListener.onScaleChanged(new BigDecimal(scale).multiply(new BigDecimal(Float.toString(mPrecision))).floatValue());
+        }
+        mSelectedPosition = scale;
     }
-
 
 
     @Override
@@ -438,7 +502,7 @@ public class RulerView extends View {
             super.scrollTo(scrollX, scrollY);
         }
 
-        if(mListener != null){
+        if (mListener != null) {
             int position = computeSelectedPosition();
             onScaleChanged(position + mBeginRange);
         }
@@ -451,20 +515,19 @@ public class RulerView extends View {
 
     }
 
-    private int     computeTextHeight(){
+    private float computeTextHeight() {
         Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
         float textHeight = fontMetrics.descent - fontMetrics.ascent;
-        return (int) textHeight;
+        return textHeight;
     }
 
 
-
-    private boolean isAlignTop(){
-        return  (mGravity & Gravity.TOP)  == Gravity.TOP;
+    private boolean isAlignTop() {
+        return (mGravity & Gravity.TOP) == Gravity.TOP;
     }
 
 
-    public void setGravity(int gravity){
+    public void setGravity(int gravity) {
         this.mGravity = gravity;
         invalidateView();
     }
@@ -512,34 +575,43 @@ public class RulerView extends View {
     }
 
     public interface OnScaleListener {
-        void onScaleChanged(int scale);
+        void onScaleChanged(float scale);
 
     }
 
-    public void setIndicateWidth(@IntegerRes int indicateWidth){
+    public int getSelectedPosition() {
+        return mSelectedPosition;
+    }
+
+    public float getSelectedValue() {
+        return new BigDecimal(mSelectedPosition).multiply(new BigDecimal(Float.toString(mPrecision))).floatValue();
+    }
+
+    public void setIndicateWidth(@IntegerRes int indicateWidth) {
         this.mIndicateWidth = indicateWidth;
         refreshValues();
     }
 
-    public void setIndicatePadding(@IntegerRes int indicatePadding){
+    public void setIndicatePadding(@IntegerRes int indicatePadding) {
         this.mIndicatePadding = indicatePadding;
-        refreshValues();    }
+        refreshValues();
+    }
 
-    public void setWithText(boolean withText){
+    public void setWithText(boolean withText) {
         this.mIsWithText = withText;
         refreshValues();
     }
 
-    public void setAutoAlign(boolean autoAlign){
+    public void setAutoAlign(boolean autoAlign) {
         this.mIsAutoAlign = autoAlign;
         refreshValues();
     }
 
-    public boolean isWithText(){
+    public boolean isWithText() {
         return mIsWithText;
     }
 
-    public boolean isAutoAlign(){
+    public boolean isAutoAlign() {
         return mIsAutoAlign;
     }
 }

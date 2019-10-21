@@ -9,6 +9,11 @@
         <attr name="textSize" format="dimension|reference"></attr>
         <attr name="begin" format="integer|reference" />
         <attr name="end" format="integer|reference" />
+        <attr name="selectedPosition" format="integer|reference" />
+        <attr name="beginRanges" format="string|reference" />
+        <attr name="endRanges" format="string|reference" />
+        <attr name="rangeColors" format="string|reference" />
+        <attr name="precision" format="float|reference" />
         <attr name="indicateWidth" format="dimension|reference" />
         <attr name="indicatePadding" format="dimension|reference" />
     </declare-styleable>

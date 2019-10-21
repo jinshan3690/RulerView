@@ -8,6 +8,7 @@ import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Menu;
@@ -17,7 +18,8 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 
-import com.lw.widget.RulerView;
+import com.js.rulerview.RulerView;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -59,13 +61,13 @@ public class MainActivity extends AppCompatActivity {
         Button bottomBtn = (Button) findViewById(R.id.btn_bottom);
 
         //init
-        rulerView.post(new Runnable() {
-            @Override
-            public void run() {
-                int position = Integer.valueOf(positionEditText.getText().toString());
-                rulerView.smoothScrollTo(position);
-            }
-        });
+//        rulerView.post(new Runnable() {
+//            @Override
+//            public void run() {
+//                int position = Integer.valueOf(positionEditText.getText().toString());
+//                rulerView.smoothScrollTo(position);
+//            }
+//        });
 
 
         topBtn.setOnClickListener(new View.OnClickListener() {
@@ -85,8 +87,8 @@ public class MainActivity extends AppCompatActivity {
 
         rulerView.setOnScaleListener(new RulerView.OnScaleListener() {
             @Override
-            public void onScaleChanged(int scale) {
-
+            public void onScaleChanged(float scale) {
+                Log.e("ok", String.valueOf(scale));
             }
         });
 

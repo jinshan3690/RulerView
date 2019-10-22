@@ -14,6 +14,7 @@
         <attr name="endRanges" format="string|reference" />
         <attr name="rangeColors" format="string|reference" />
         <attr name="precision" format="float|reference" />
+        <attr name="textColorEqualsRangeColors" format="boolean|reference" />
         <attr name="indicateWidth" format="dimension|reference" />
         <attr name="indicatePadding" format="dimension|reference" />
     </declare-styleable>

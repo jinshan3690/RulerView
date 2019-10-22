@@ -42,6 +42,8 @@ public class RulerView extends View {
 
     private int mIndicatePadding;
 
+    private boolean mTextColorEquals;
+
     private Paint mIndicatePaint;
 
     private Paint mTextPaint;
@@ -107,6 +109,7 @@ public class RulerView extends View {
         mRangeColors = convertToColor(ta.getString(R.styleable.RulerView_rangeColors));
         mIndicateWidth = (int) ta.getDimension(R.styleable.RulerView_indicateWidth, 5);
         mIndicatePadding = (int) ta.getDimension(R.styleable.RulerView_indicatePadding, 15);
+        mTextColorEquals = ta.getBoolean(R.styleable.RulerView_textColorEqualsRangeColors, false);
         ta.recycle();
 
         int[] indices = new int[]{android.R.attr.gravity};
@@ -181,7 +184,7 @@ public class RulerView extends View {
         for (int value = mBeginRange, position = 0; value <= mEndRange; value++, position++) {
             drawIndicate(canvas, position, value);
             if (mIsWithText)
-                drawText(canvas, position, String.valueOf(new BigDecimal(value).multiply(new BigDecimal(Float.toString(mPrecision))).floatValue()));
+                drawText(canvas, position,value, String.valueOf(new BigDecimal(value).multiply(new BigDecimal(Float.toString(mPrecision))).floatValue()));
         }
         canvas.restoreToCount(count);
     }
@@ -217,7 +220,7 @@ public class RulerView extends View {
         canvas.drawRect(left, top, right, bottom, mIndicatePaint);
     }
 
-    private void drawText(Canvas canvas, int position, String text) {
+    private void drawText(Canvas canvas, int position, int value, String text) {
         if (position % 5 != 0)
             return;
 
@@ -226,8 +229,16 @@ public class RulerView extends View {
 
         if (position == mSelectedPosition)
             mTextPaint.setColor(mSelectedColor);
-        else
+        else {
             mTextPaint.setColor(mTextColor);
+            if(mTextColorEquals && mBeginRanges.length == mEndRanges.length)
+                for (int i = 0; i < mBeginRanges.length; i++) {
+                    if (mBeginRanges[i] <= value && mEndRanges[i] >= value){
+                        mTextPaint.setColor(mRangeColors[i]);
+                        break;
+                    }
+                }
+        }
         mTextPaint.setTextSize(mTextSize);
         mTextPaint.setTextAlign(Paint.Align.CENTER);
 

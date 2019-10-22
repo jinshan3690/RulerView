@@ -486,7 +486,7 @@ public class RulerView extends View {
     }
 
     public void smoothScrollToValue(float value) {
-        int position = (int) (new BigDecimal(value).divide(new BigDecimal(mPrecision)).floatValue() - mBeginRange);
+        int position = (int) (new BigDecimal(value).divide(new BigDecimal(Float.toString(mPrecision))).floatValue() - mBeginRange);
         smoothScrollTo(position);
     }
 

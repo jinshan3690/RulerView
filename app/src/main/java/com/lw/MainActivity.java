@@ -56,7 +56,6 @@ public class MainActivity extends AppCompatActivity {
         CheckBox    withText = (CheckBox) findViewById(R.id.cb_with_text);
         CheckBox    autoAlign = (CheckBox) findViewById(R.id.cb_auto_align);
 
-
         Button topBtn = (Button) findViewById(R.id.btn_top);
         Button bottomBtn = (Button) findViewById(R.id.btn_bottom);
 

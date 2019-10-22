@@ -633,4 +633,11 @@ public class RulerView extends View {
     public boolean isAutoAlign() {
         return mIsAutoAlign;
     }
+
+    public void setRanges(int[] mBeginRanges, int[] mEndRanges) {
+        this.mBeginRanges = mBeginRanges;
+        this.mEndRanges = mEndRanges;
+        invalidate();
+    }
+
 }

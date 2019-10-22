@@ -97,7 +97,7 @@ public class RulerView extends View {
 
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.RulerView);
         mIndicateColor = ta.getColor(R.styleable.RulerView_indicateColor, Color.BLACK);
-        mSelectedColor = ta.getColor(R.styleable.RulerView_selectedColor, Color.RED);
+        mSelectedColor = ta.getColor(R.styleable.RulerView_selectedColor, 0);
         mTextColor = ta.getColor(R.styleable.RulerView_textColor, Color.GRAY);
         mTextSize = ta.getDimension(R.styleable.RulerView_textSize, 18);
         mSelectedPosition = ta.getInt(R.styleable.RulerView_selectedPosition, 0);
@@ -205,7 +205,7 @@ public class RulerView extends View {
             }
         }
 
-        if (position == mSelectedPosition)
+        if (position == mSelectedPosition && mSelectedColor != 0)
             mIndicatePaint.setColor(mSelectedColor);
         else {
             mIndicatePaint.setColor(mIndicateColor);
@@ -227,7 +227,7 @@ public class RulerView extends View {
         computeIndicateLoc(mIndicateLoc, position);
         float textHeight = computeTextHeight();
 
-        if (position == mSelectedPosition)
+        if (position == mSelectedPosition && mSelectedColor != 0)
             mTextPaint.setColor(mSelectedColor);
         else {
             mTextPaint.setColor(mTextColor);

@@ -22,7 +22,6 @@
             android:gravity="top"
             app:begin="0"
             app:end="350"
-            app:selectedPosition="45"
             app:precision="0.1"
             app:beginRanges="0,45,101"
             app:endRanges="44,100,350"

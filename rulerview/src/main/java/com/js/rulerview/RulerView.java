@@ -27,6 +27,7 @@ public class RulerView extends View {
     final String TAG = RulerView.class.getSimpleName();
 
     private int mSelectedPosition;
+    private static final int DEFAULT_DURATION = 250;
 
     private int mBeginRange;
     private int[] mBeginRanges;
@@ -474,20 +475,27 @@ public class RulerView extends View {
     }
 
     public void smoothScrollTo(int position) {
+        smoothScrollTo(position, DEFAULT_DURATION);
+    }
+    public void smoothScrollTo(int position, int duration) {
         if (position < 0 || mBeginRange + position > mEndRange)
             return;
 
         if (!mOverScroller.isFinished())
             mOverScroller.abortAnimation();
 
-        int scrollX = getScrollByPosition(position);
-        mOverScroller.startScroll(getScrollX(), getScrollY(), scrollX - getScrollX(), 0);
+         int scrollX = getScrollByPosition(position);
+
+        mOverScroller.startScroll(getScrollX(), getScrollY(), scrollX - getScrollX(), 0, duration);
         invalidateView();
     }
 
     public void smoothScrollToValue(float value) {
+        smoothScrollToValue(value, DEFAULT_DURATION);
+    }
+    public void smoothScrollToValue(float value, int duration) {
         int position = (int) (new BigDecimal(value).divide(new BigDecimal(Float.toString(mPrecision))).floatValue() - mBeginRange);
-        smoothScrollTo(position);
+        smoothScrollTo(position, duration);
     }
 
 
